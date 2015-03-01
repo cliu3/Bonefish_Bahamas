@@ -90,8 +90,10 @@ fprintf('distributed %d points in the kml perimeter\n',length(pts))
 fprintf('culling %d points randomly\n',ncull);
 
 % randomly select points to remove
-random_order = shuffle(1:length(pts));
-retain = pts(random_order(ncull+1:length(pts)));
+pts = pts(randperm(end));
+% random_order = shuffle(1:length(pts));
+retain = pts(ncull+1:length(pts));
+
 lat_release = lat_release(retain);
 lon_release = lon_release(retain);
 
@@ -174,15 +176,22 @@ z_release = - (40+20.*rand(numel(lat_release),1));
 %
 % TO DO: save a zone number variable (i.e. which spawning zone a particle is from) as a mat file
 %
+SpawningZone = zeros(nlag,1);
+for i=1:numel(kml_files)
+    [latt,lont,dumz] = read_kml(kml_files{i});
+    in = inpolygon(lon_release,lat_release,lont,latt);
+    SpawningZone(in) = i;
 
+end
+save SpawningZone SpawningZone
 
 %------------------------------------------------------------------------------
 % Output file format:
 % the first column contains each particle?s latitudinal coordinate
 % the second contains its longitudinal coordinate
 % the third column contains the particle?s depth (in meters from surface, e.g., -35.55)
-% the fourth column contains the ?date of birth? which is delay in seconds from the
-%     beginning of the model run until the time that particle will start being tracked
+% the fourth column contains the 'date of birth' which is delay in seconds from the
+%     beginning of the model run (1st forcing file) until the time that particle will start being tracked
 %     (i.e., start to move).
 %------------------------------------------------------------------------------
 write_offline_lagfile_csv(lag_pos_file,lat_release, ...
