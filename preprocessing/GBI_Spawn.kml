@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>GBI_Spawn.shp</name>
+	<Schema name="GBI_Spawn" id="S_GBI_Spawn_I">
+		<SimpleField type="int" name="Id"><displayName>&lt;b&gt;Id&lt;/b&gt;</displayName>
+</SimpleField>
+	</Schema>
+	<Style id="falseColor">
+		<BalloonStyle>
+			<text><![CDATA[<table border="0">
+  <tr><td><b>Id</b></td><td>$[GBI_Spawn/Id]</td></tr>
+</table>
+]]></text>
+		</BalloonStyle>
+		<PolyStyle>
+			<colorMode>random</colorMode>
+		</PolyStyle>
+	</Style>
+	<Folder id="layer 0">
+		<name>GBI_Spawn</name>
+		<Placemark>
+			<styleUrl>#falseColor</styleUrl>
+			<ExtendedData>
+				<SchemaData schemaUrl="#S_GBI_Spawn_I">
+					<SimpleData name="Id">0</SimpleData>
+				</SchemaData>
+			</ExtendedData>
+			<Polygon>
+				<outerBoundaryIs>
+					<LinearRing>
+						<coordinates>
+							-77.98166797854056,26.63467247758188,0 -77.98418096788156,26.62787578585262,0 -77.94546624277851,26.61579344287119,0 -77.94231401473019,26.62260281781629,0 -77.98166797854056,26.63467247758188,0 
+						</coordinates>
+					</LinearRing>
+				</outerBoundaryIs>
+			</Polygon>
+		</Placemark>
+	</Folder>
+</Document>
+</kml>
