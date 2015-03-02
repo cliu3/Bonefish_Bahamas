@@ -19,6 +19,7 @@ clear all; close all;
 
 fprintf('initializing...\n');
 
+
 % open the mesh file
 nc = netcdf('../input/roms_grd_rot_raw.nc','nowrite');
 lon_rho = nc{'lon_rho'}(:);
@@ -43,121 +44,78 @@ time=nc{'model_time'}(:);
 
 ntime=numel(time);
 
+
+% load spawning zone array
+load ../preprocessing/SpawningZone.mat
+
 % PROJECTION
 [xm, ym]=baham_project(lon_rho,lat_rho,'forward');
 [xp, yp]=baham_project(lonp,latp,'forward');
 
 
 %% compute PDF
-
-for i=1:ntime
+for source=1:max(SpawningZone);
+    pt_idx = (SpawningZone==source);
     
-    fprintf('calculating PDF for time frame %d\n',i);
-    
-    
-    
-    PDF = probability(xp(i,:), yp(i,:), xm, ym);
-    PDF(isnan(PDF))=0;
-    
-    
-    PDFv{i} = PDF;
-    
+    %for i=1:ntime
+    i = ntime;
+        
+        fprintf('calculating PDF for time frame %d\n',i);
+        
+        PDF = probability(xp(i,pt_idx), yp(i,pt_idx), xm, ym);
+        PDF(isnan(PDF))=0;
+        
+        
+        PDFv{source,i} = PDF;
+        
+    %end
 end
 
 
 save PDFv  PDFv %connectivity;
 
+% read in settlement zone files
+set_files = {'Abaco_Settlement','Eleu_Settlement','GBI_Settlement'};
+nsink=numel(set_files);
 
-%% ====== below code to be adapted ========
-  
+
+
+% mark destination zones on mesh
+c = {};
+for target=1:nsink
+    clear settlement
+    load(set_files{target})
+    fprintf('target %d\n',target);
+    [xv, yv]=baham_project(settlement.LON,settlement.LAT,'forward');
+
+    % determine which nodes are within the settlement zone polygon
+    
+    c{target} = double(inpolygons(xm,ym,xv,yv));
+    
+end
+
+%
+% TO DO: test inpolygons
+%
+
+
 
 %% compute  connectivity
 
-for source=1:nsource;
-
+for source=1:max(SpawningZone);
     
     for target=1:nsink
         fprintf('calculating connectivity from %d to %d\n',source,target);
         
-        % Integration
-        
-        mean_connectivity(source,target) = dot(c{target}.*wmPDF(source,:)',art1);
+        % Integral
+        settpdf = c{target}.*PDFv{source,end};
+        connectivity(source,target) = dot(settpdf(:),area(:));
     end;
-    
 end
 
 
-%% compute settlement success
 
-deltaT = age(2);
-S = zeros(nsource,nsink);
-% compute hourly settlememnt coefficient
-
-D = 0.1849*ones(size(age));
-D(age>=14) = 0.1849.*erfc(0.4*(age(age>=14)-14));
-
-
-xp=[];
-yp=[];
-
-%% hourly
-for source=1:nsource;
-    [~, nlag] = size(xp0(1,tid0==source));
-    for target=1:nsink
-        fprintf('calculating settlement success from %d to %d\n',source,target);
-        % select settlement zone
-        xv=settlement(target).X;
-        yv=settlement(target).Y;
-        r=age(age>=10);
-        for t=r';
-            fprintf('calculating age: %d\n',t);
-            xp=xp0(age==t,tid0==source);
-            yp=yp0(age==t,tid0==source);
-            
-            E = inpolygon(xp,yp,xv,yv);
-            
-            
-            S(source,target) = S(source,target) + sum(D(age==t).*E.*deltaT);
-            
-        end
-        S(source,target) = S(source,target)./nlag;
-        
-    end
-end
-S_hourly = S;
-toc
-
-%% daily
-tic
-for source=1:nsource;
-    [~, nlag] = size(xp0(1,tid0==source));
-    for target=1:nsink
-        fprintf('calculating settlement success from %d to %d\n',source,target);
-        % select settlement zone
-        xv=settlement(target).X;
-        yv=settlement(target).Y;
-        
-        for t=10:19;
-            fprintf('calculating age: %d\n',t);
-            xp=xp0(age==t,tid0==source);
-            yp=yp0(age==t,tid0==source);
-            
-            E = inpolygon(xp,yp,xv,yv);
-            
-            
-            S(source,target) = S(source,target) + sum(D(age==t).*E);
-            
-        end
-        S(source,target) = S(source,target)./nlag;
-        
-    end
-end
-S_daily = S;
-toc
-
-save S S_hourly S_daily
-
-save('data','wmPDF','mean_connectivity','-append')
+save('data','PDFv','connectivity')
 
 
 

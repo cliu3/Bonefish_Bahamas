@@ -174,8 +174,9 @@ end
 z_release = - (40+20.*rand(numel(lat_release),1));
 
 %
-% TO DO: save a zone number variable (i.e. which spawning zone a particle is from) as a mat file
-%
+% Save a zone number variable (i.e. which spawning zone a particle is from) as a mat file
+% This will be used for computing connectivity matrix in postprocessing
+% code
 SpawningZone = zeros(nlag,1);
 for i=1:numel(kml_files)
     [latt,lont,dumz] = read_kml(kml_files{i});
