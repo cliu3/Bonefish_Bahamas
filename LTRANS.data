@@ -36,7 +36,7 @@ $hydroparam
   tdim       = 196            ! Number of time steps per ROMS hydro predictions file
   hc         = 3           ! Min Depth - used in ROMS S-level transformations
   z0         = 0.0005        ! ROMS bottom roughness parameter (Zob)
-  Vtransform = 2             ! 1-WikiRoms Eq. 1, 2-WikiRoms Eq. 2, 3-Song/Haidvogel 1994 Eq.
+  Vtransform = 1             ! 1-WikiRoms Eq. 1, 2-WikiRoms Eq. 2, 3-Song/Haidvogel 1994 Eq.
                              !
   readZeta   = .TRUE.        ! If .TRUE. read in sea-surface height   (zeta) from NetCDF file, else use constZeta
   constZeta  = 0.0           ! Constant value for Zeta if readZeta is .FALSE.
