@@ -60,11 +60,11 @@ for source=1:max(SpawningZone);
     %for i=1:ntime
     i = ntime;
         
-        fprintf('calculating PDF for time frame %d\n',i);
+        %fprintf('calculating PDF for time frame %d\n',i);
         
         PDF = probability(xp(i,pt_idx), yp(i,pt_idx), xm, ym);
         PDF(isnan(PDF))=0;
-        
+        PDF = PDF ./ dot(PDF(:),area(:));   % NORMALIZE
         
         PDFv{source,i} = PDF;
         
@@ -94,9 +94,7 @@ for target=1:nsink
     
 end
 
-%
-% TO DO: test inpolygons
-%
+
 
 
 

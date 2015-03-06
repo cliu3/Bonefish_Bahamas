@@ -8,7 +8,7 @@
 !*** NUMBER OF PARTICLES ***
 $numparticles
 
-  numpar = 100               ! Number of particles (total number for whole simulation)
+  numpar = 16000               ! Number of particles (total number for whole simulation)
                              ! numpar should equal the number of rows in the particle 
                              ! locations input file
 $end

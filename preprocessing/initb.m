@@ -22,7 +22,7 @@ close all; clear all;
 %=======================
 % Define parameters
 %=======================
-nlag=100;             %number of particles
+nlag=16000;             %number of particles
 % release date: Jan 28, 2009 midnight
 % 1st forcing file: roms_his_rot_jan_30.nc
 % seconds from Jan 16 00:00 UTC to Jan 28 00:00 UTC-5: 1054800
