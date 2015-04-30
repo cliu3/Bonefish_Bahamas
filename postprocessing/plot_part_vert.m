@@ -19,7 +19,7 @@ Cs_r = nc.Cs_r(:);
 hc = nc.hc(:);
 
 
-% open the particle data (LTRANS potput)
+% open the particle data (LTRANS output)
 fname = '../output/output_16000.nc';
 
 nc = netcdf(fname,'nowrite');

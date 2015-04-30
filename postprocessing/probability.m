@@ -29,7 +29,7 @@ MIN_XY = [min(xp)-a,min(yp)-b];
 MAX_XY = [max(xp)+a,max(yp)+b];
 
 data = [xp;yp]';
-[~,density,X,Y]=kde2d(data,128,MIN_XY,MAX_XY);
+[~,density,X,Y]=kde2d(data,256,MIN_XY,MAX_XY);
 PDF = interp2(X,Y,density,xm,ym);
 
 
