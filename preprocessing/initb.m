@@ -1,3 +1,4 @@
+
 % Generating initial position file for LTRANS
 %
 function initb()
@@ -22,16 +23,17 @@ close all; clear all;
 %=======================
 % Define parameters
 %=======================
-nlag=16000;             %number of particles
-% release date: Jan 28, 2009 midnight
-% 1st forcing file: roms_his_rot_jan_30.nc
-% seconds from Jan 16 00:00 UTC to Jan 28 00:00 UTC-5: 1054800
-release_beg=1054800;        %time at which larval release begins (seconds after LTRANS initialization)
-release_end=release_beg;    %time at which larval release ends (seconds after LTRANS initialization)
+nlag=12000;             %number of particles
+% release date: many, but starting dec 08 2008 at 02:42 UTC-5
+% 1st forcing file: roms_his_rot_dec_15.nc
+% seconds from nov 30 2008 00:00 UTC to oct dec 08 2008 02:42 UTC-5: 718920
+% release_beg=980339;        %time at which larval release begins (seconds after 1st forcing file)
+release_beg=lt_start_calculator(08,2009,1,26,8,19,0);
+release_end=release_beg;    %time at which larval release ends (seconds after 1st forcing file)
 release_intv=0;    %time interval (in seconds) between two consecutive releases
+fprintf('Release time (seconds after 1st forcing file, lt_start in LTRANS.data): %d\n',release_beg)
 
-
-lag_pos_file = '../input/Initial_particle_locations.csv';
+lag_pos_file = '../input/p12000_jan26.csv';
 
 % Initialization of Variables
 t_release = [];  %time of release in seconds after LTRANS initialization
@@ -45,7 +47,8 @@ z_release = [];  %depth of release location (in meters from surface, e.g., -35.5
 %------------------------------------------------------------------------------
 
 % read in the kml file
-kml_files = {'Abaco_Spawn.kml','Cape_Eleu_Spawn.kml','GBI_Spawn.kml'};
+%kml files = {'Abaco_Spawn.kml','Cape_Eleu_Spawn.kml','GBI_Spawn.kml'};
+kml_files = {'ABACO_SPAWN_NEW.kml','ELEU_SPAWN_NEW.kml','GBI_SPAWN_NEW.kml','ANDROS_SPAWN_NEW.kml'};
 
 latb=[];
 lonb=[];
