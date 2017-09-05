@@ -16,37 +16,83 @@
 %
 %==============================================================================
 clear all; close all;
-
+addpath('../preprocessing')
 fprintf('initializing...\n');
 
+%dropbox_dir = '/Users/gcowles/Dropbox/Bonefish_Bahamas_Project';
+
+roms_mesh   = ['../input/roms_grd_rot_raw.nc'];
+LTRANS_output = ['../output/output.nc'];
+spawning_zones = ['../preprocessing/SpawningZone.mat'];
+
+%set_files = {'Abaco_Settlement','Eleu_Settlement','GBI_Settlement'};
+
+set_files = {'Abaco_settlement_final_wgs84', ...
+             'Eleu_settlement_final_wgs84', ...
+             'GBI_Settlement_final_wgs84', ...
+             'Andros_settlement_final_wgs84'};
 
 % open the mesh file
-nc = netcdf('../input/roms_grd_rot_raw.nc','nowrite');
-lon_rho = nc{'lon_rho'}(:);
-lat_rho = nc{'lat_rho'}(:);
-mask_rho = logical(nc{'mask_rho'}(:));
-h = nc{'h'}(:);
-pm = nc{'pm'}(:);
-pn = nc{'pn'}(:);
-area=1./(pm.*pn);
+h  = ncread(roms_mesh,'h')';
+pm = ncread(roms_mesh,'pm')';
+pn = ncread(roms_mesh,'pn')';
+area = 1./(pm.*pn);
+lat_rho = ncread(roms_mesh,'lat_rho')';
+lon_rho = ncread(roms_mesh,'lon_rho')';
+mask_rho = ncread(roms_mesh,'mask_rho')';
+mask_rho = logical(mask_rho);
+
+% lon_rho = nc{'lon_rho'}(:);
+% lat_rho = nc{'lat_rho'}(:);
+% mask_rho = logical(nc{'mask_rho'}(:));
+% h = nc{'h'}(:);
+% pm = nc{'pm'}(:);
+% pn = nc{'pn'}(:);
+% area=1./(pm.*pn);
 
 
 
 
 % open the particle data (LTRANS potput)
-fname = '../output/output.nc';
 
-nc = netcdf(fname,'nowrite');
-lonp = nc{'lon'}(:);
-latp = nc{'lat'}(:);
-age = nc{'age'}(:);
-time=nc{'model_time'}(:);
+% nc = netcdf(LTRANS_output,'nowrite');
+% lonp = nc{'lon'}(:);
+% latp = nc{'lat'}(:);
+% age = nc{'age'}(:);
+% time=nc{'model_time'}(:);
+%nc = ncread(LTRANS_output,'nowrite');
+lonp = ncread(LTRANS_output,'lon')';  
+latp = ncread(LTRANS_output,'lat')';  
+age  = ncread(LTRANS_output,'age')';
+time = ncread(LTRANS_output,'model_time')';
+dob  = ncread(LTRANS_output,'dob')';
+age  = ncread(LTRANS_output,'age')';
+age  = age(:,1)/(24.*3600); %age in days
+
+if(numel(unique(dob)) ~= 1)
+  error('not all particles were released simultaneously');
+end;
 
 ntime=numel(time);
+npart=size(lonp,2);
+
+% setup the settlement probability distribution
+sett_beg = 41;  %start at day 40
+sett_end = 73;  %end at day 60
+settprob = zeros(numel(age),1);
+[mini,ibeg] = min(abs(age-sett_beg)); %output index marking settlement begin
+[mini,iend] = min(abs(age-sett_end)); %output index marking settlement end
+settprob(ibeg:iend) = 1./(iend-ibeg+1);
+plot(age,settprob);
+xlabel('time since release (days)');
+ylabel('settlement probability (-/day)');
+fprintf('sum of settlement probability should be 1, is %f\n',sum(settprob));
+
+
 
 
 % load spawning zone array
-load ../preprocessing/SpawningZone.mat
+load(spawning_zones);
 
 % PROJECTION
 [xm, ym]=baham_project(lon_rho,lat_rho,'forward');
@@ -55,27 +101,19 @@ load ../preprocessing/SpawningZone.mat
 
 %% compute PDF
 for source=1:max(SpawningZone);
-    pt_idx = (SpawningZone==source);
-    
-    %for i=1:ntime
-    i = ntime;
-        
-        %fprintf('calculating PDF for time frame %d\n',i);
-        
+    pt_idx = (SpawningZone(1:npart)==source);
+    for i=1:ntime   
+        fprintf('calculating PDF for time frame %d\n',i); 
         PDF = probability(xp(i,pt_idx), yp(i,pt_idx), xm, ym);
         PDF(isnan(PDF))=0;
         PDF = PDF ./ dot(PDF(:),area(:));   % NORMALIZE
-        
         PDFv{source,i} = PDF;
-        
-    %end
+    end;  
 end
 
-
-save PDFv  PDFv %connectivity;
+save('PDFv',  'PDFv','-v7.3') %connectivity;
 
 % read in settlement zone files
-set_files = {'Abaco_Settlement','Eleu_Settlement','GBI_Settlement'};
 nsink=numel(set_files);
 
 
@@ -104,19 +142,52 @@ for source=1:max(SpawningZone);
     
     for target=1:nsink
         fprintf('calculating connectivity from %d to %d\n',source,target);
+        settpdf = xm*0; 
         
-        % Integral
-        settpdf = c{target}.*PDFv{source,end};
+        % Loop over output frames, accumulating PDF based on settlement
+        % prob
+        for i=1:ntime;  
+          if(settprob(i) > 0);
+            fprintf('including PDF from frame %f with probability %f\n',i,settprob(i));
+            settpdf = settpdf + c{target}.*PDFv{source,i}.*settprob(i);
+          end;
+        end;
+
         connectivity(source,target) = dot(settpdf(:),area(:));
     end;
 end
 
 
 
-save('data','PDFv','connectivity')
+save('data','PDFv','-v7.3','connectivity')
 
+%% make some plots
+%plot LPDF
+source=4;
+spawning_names = {'Abaco','Eleu','GBI','Andros'};
+figure()
+PDF_plot = PDFv{source,end};
+PDF_plot(~mask_rho)=nan;
+pcolor(lon_rho,lat_rho,PDF_plot)
+shading flat
+colorbar;
+axis([-79.5 -75.5 24 27.5])
+title(['LPDF of individuals spawned in ',spawning_names{source}])
 
+%plot connectivity
+fig1=figure('Position',[100,100,400,300]);
 
+imagesc(connectivity);
+colorbar;
+axis xy
 
+tick=1:4;
+ticklabel={'Abaco','Eleu','GBI','Andros'};
+set(gca,'XTick',tick);
+set(gca,'YTick',tick);
+set(gca,'XTickLabel',ticklabel);
+set(gca,'YTickLabel',ticklabel);
+
+set(gcf,'Color','w')
 
 
