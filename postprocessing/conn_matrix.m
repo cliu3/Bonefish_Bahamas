@@ -98,11 +98,18 @@ load(spawning_zones);
 [xm, ym]=baham_project(lon_rho,lat_rho,'forward');
 [xp, yp]=baham_project(lonp,latp,'forward');
 
+% specify the range of particle age based upon which the LPDF is computed
+% e.g., to make the LPDF only replect probabilities from 40-72 days post-release,
+% set age0 = 40 and age1 = 72
+age0 = 40;  % number in days
+age1 = 72;  % number in days
+time_idx = find(time >= (age0-1)*86400 & time <= (age1-1)*86400);
+
 
 %% compute PDF
 for source=1:max(SpawningZone);
     pt_idx = (SpawningZone(1:npart)==source);
-    for i=1:ntime   
+    for i = time_idx;
         fprintf('calculating PDF for time frame %d\n',i); 
         PDF = probability(xp(i,pt_idx), yp(i,pt_idx), xm, ym);
         PDF(isnan(PDF))=0;
@@ -146,7 +153,7 @@ for source=1:max(SpawningZone);
         
         % Loop over output frames, accumulating PDF based on settlement
         % prob
-        for i=1:ntime;  
+        for i = time_idx;  
           if(settprob(i) > 0);
             fprintf('including PDF from frame %f with probability %f\n',i,settprob(i));
             settpdf = settpdf + c{target}.*PDFv{source,i}.*settprob(i);
