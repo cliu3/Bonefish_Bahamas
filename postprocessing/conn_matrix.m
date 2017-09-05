@@ -103,7 +103,6 @@ load(spawning_zones);
 % set age0 = 40 and age1 = 72
 age0 = 40;  % number in days
 age1 = 72;  % number in days
-time_idx = find(time >= (age0-1)*86400 & time <= (age1-1)*86400);
 
 
 %% compute PDF
@@ -170,16 +169,19 @@ save('data','PDFv','-v7.3','connectivity')
 
 %% make some plots
 %plot LPDF
-source=4;
+
 spawning_names = {'Abaco','Eleu','GBI','Andros'};
-figure()
-PDF_plot = PDFv{source,end};
-PDF_plot(~mask_rho)=nan;
-pcolor(lon_rho,lat_rho,PDF_plot)
-shading flat
-colorbar;
-axis([-79.5 -75.5 24 27.5])
-title(['LPDF of individuals spawned in ',spawning_names{source}])
+for source=1:4;
+    figure()
+    PDF_plot = PDFv{source,end};
+    PDF_plot(~mask_rho)=nan;
+    pcolor(lon_rho,lat_rho,PDF_plot)
+    shading flat
+    colorbar;
+    axis([-79.5 -75.5 24 27.5])
+    title(['LPDF of individuals spawned in ',spawning_names{source}])
+    saveas(gcf,['LPDF_',spawning_names{source},'.png'])
+end
 
 %plot connectivity
 fig1=figure('Position',[100,100,400,300]);
@@ -196,5 +198,7 @@ set(gca,'XTickLabel',ticklabel);
 set(gca,'YTickLabel',ticklabel);
 
 set(gcf,'Color','w')
+
+saveas(gcf,'connectivity.png')
 
 
