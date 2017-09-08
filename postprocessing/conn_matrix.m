@@ -77,8 +77,8 @@ ntime=numel(time);
 npart=size(lonp,2);
 
 % setup the settlement probability distribution
-sett_beg = 41;  %start at day 40
-sett_end = 73;  %end at day 60
+sett_beg = 40;  %start at day 40
+sett_end = 72;  %end at day 72
 settprob = zeros(numel(age),1);
 [mini,ibeg] = min(abs(age-sett_beg)); %output index marking settlement begin
 [mini,iend] = min(abs(age-sett_end)); %output index marking settlement end
@@ -101,8 +101,9 @@ load(spawning_zones);
 % specify the range of particle age based upon which the LPDF is computed
 % e.g., to make the LPDF only replect probabilities from 40-72 days post-release,
 % set age0 = 40 and age1 = 72
-age0 = 40;  % number in days
-age1 = 72;  % number in days
+age0 = sett_beg;  % number in days
+age1 = sett_end;  % number in days
+time_idx = find(time >= (age0-1)*86400 & time <= (age1)*86400);
 
 
 %% compute PDF
