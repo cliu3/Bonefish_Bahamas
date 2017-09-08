@@ -52,53 +52,79 @@ kml_files = {'ABACO_SPAWN_NEW.kml','ELEU_SPAWN_NEW.kml','GBI_SPAWN_NEW.kml','AND
 
 latb=[];
 lonb=[];
-for kml_file=kml_files
-    [latt,lont,dumz] = read_kml(kml_file{1});
-    [lont, latt]=polycw(lont, latt);
+lat_release=[];
+lon_release=[];
 
-    
-    latb=[latb;latt;nan];
-    lonb=[lonb;lont;nan];
+% divide total particles into (almost) equal groups
+nspawnzone = numel(kml_files);
+q=floor(nlag/nspawnzone);
+r=mod(nlag,nspawnzone);
+splits=[];
+for i=1:nspawnzone
+    splits(i)=q;
+end
+for i=1:r
+    splits(i)=splits(i)+1;
 end
 
-lat1 = min(latb);
-lat2 = max(latb);
-lon1 = min(lonb);
-lon2 = max(lonb);
-
-% create a uniform grid of points containing the kml perimeter
-% use twice the number of points because we want at least nlag inside the kml box
-% we will cull randomly later to get to nlag
-multifac = 2;
-ncull = -1;
-while(ncull < 0)
-    lat_release = lat1 + (lat2-lat1).*rand(round(nlag*multifac),1);
-    lon_release = lon1 + (lon2-lon1).*rand(round(nlag*multifac),1);
-    
-    % tag the points inside the box
-    mark = inpolygons(lon_release,lat_release,lonb,latb);
-    pts = find(mark==1);
+for i=1:nspawnzone
+    kml_file=kml_files(i);
+%     kml_file{1}
+    [latt,lont,dumz] = read_kml(kml_file{1});
+    [lont, latt]=polycw(lont, latt);
     
     
-    % make sure we have enough
-    ncull = length(pts) - nlag;
+    %     latb=[latb;latt;nan];
+    %     lonb=[lonb;lont;nan];
     
-    if (ncull < 0)
-        multifac=multifac*1.1;
-    end
-end;
+    
+    lat1 = min(latt);
+    lat2 = max(latt);
+    lon1 = min(lont);
+    lon2 = max(lont);
+    
+    % create a uniform grid of points containing the kml perimeter
+    % use twice the number of points because we want at least nlag inside the kml box
+    % we will cull randomly later to get to nlag
+    multifac = 2;
+    ncull = -1;
+    while(ncull < 0)
+        lat_release0 = lat1 + (lat2-lat1).*rand(round(splits(i)*multifac),1);
+        lon_release0 = lon1 + (lon2-lon1).*rand(round(splits(i)*multifac),1);
+        
+        % tag the points inside the box
+        mark = inpolygons(lon_release0,lat_release0,lont,latt);
+        pts = find(mark==1);
+        
+        
+        % make sure we have enough
+        ncull = length(pts) - splits(i);
+        
+        if (ncull < 0)
+            multifac=multifac*1.1;
+        end
+    end;
+    
+    % report number
+    fprintf('distributed %d points in the kml perimeter\n',length(pts))
+    fprintf('culling %d points randomly\n',ncull);
+    
+    % randomly select points to remove
+    pts = pts(randperm(end));
+    % random_order = shuffle(1:length(pts));
+    retain = pts(ncull+1:length(pts));
+    
+    lat_release0 = lat_release0(retain);
+    lon_release0 = lon_release0(retain);
+    
+    lat_release=[lat_release;lat_release0];
+    lon_release=[lon_release;lon_release0];
+    
+end
 
-% report number
-fprintf('distributed %d points in the kml perimeter\n',length(pts))
-fprintf('culling %d points randomly\n',ncull);
 
-% randomly select points to remove
-pts = pts(randperm(end));
-% random_order = shuffle(1:length(pts));
-retain = pts(ncull+1:length(pts));
 
-lat_release = lat_release(retain);
-lon_release = lon_release(retain);
+
 
 %plot release map
 figure();hold on
@@ -187,6 +213,8 @@ for i=1:numel(kml_files)
     SpawningZone(in) = i;
 
 end
+tabulate(SpawningZone)
+fprintf('Each spawning zone should have (almost) equal number of particles.\n')
 save SpawningZone SpawningZone
 
 %------------------------------------------------------------------------------
